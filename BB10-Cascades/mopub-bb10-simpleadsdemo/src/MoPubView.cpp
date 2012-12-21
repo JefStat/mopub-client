@@ -227,6 +227,9 @@ void MoPubView::registerClick(){
 void MoPubView::onRegisterClickReply(){
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
     Q_CHECK_PTR(reply);
+    if ( QNetworkReply::NoError != reply->error()){
+        qDebug() << "RegisterClick error: " << reply->errorString();
+    }
     reply->deleteLater();
 }
 
@@ -246,6 +249,7 @@ void MoPubView::invokeUrl(QUrl url)
 
 void MoPubView::showBrowserForUrl(QUrl url)
 {
+    registerClick();
     InvokeRequest request = InvokeRequest();
     request.setUri(url);
     request.setAction("bb.action.OPEN");
