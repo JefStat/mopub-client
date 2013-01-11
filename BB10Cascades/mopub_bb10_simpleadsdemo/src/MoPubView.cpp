@@ -28,7 +28,7 @@ using namespace bb::device;
 
 const QString MoPubView::SDK_VERSION = QString("1.9.0.8");
 const QString MoPubView::API_VERSION = QString("8");
-#if TESTING
+#ifdef TESTING
 const QString MoPubView::MOPUB_URL = QString("http://testing.ads.mopub.com");
 #else
 const QString MoPubView::MOPUB_URL = QString("http://ads.mopub.com");

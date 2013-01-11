@@ -1,6 +1,6 @@
 #ifndef MOPUBVIEW_HPP_
 #define MOPUBVIEW_HPP_
-#define TESTING 0
+#define TESTING
 
 #include <QObject>
 #include <QUrl>
