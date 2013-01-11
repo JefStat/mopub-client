@@ -58,11 +58,11 @@ MoPubView::MoPubView()
     mScrollView->setContent(mAdView);
     mControlContainer->add(mScrollView);
 
-	bool res = connect(mAdView, SIGNAL(navigationRequested(bb::cascades::WebNavigationRequest*)),
-			this, SLOT(onNavigationRequested(bb::cascades::WebNavigationRequest*)));
-	Q_ASSERT(res);
+    bool res = connect(mAdView, SIGNAL(navigationRequested(bb::cascades::WebNavigationRequest*)),
+            this, SLOT(onNavigationRequested(bb::cascades::WebNavigationRequest*)));
+    Q_ASSERT(res);
 
-	Application* app = Application::instance();
+    Application* app = Application::instance();
     res = connect(app, SIGNAL(asleep()),
             this, SLOT(cancelRefreshTimer()));
     Q_ASSERT(res);
@@ -75,7 +75,7 @@ MoPubView::MoPubView()
     res = connect(mAutoAdRefreshTimer, SIGNAL(timeout()), this, SLOT(loadAd()));
     Q_ASSERT(res);
     Q_UNUSED(res);
-	setRoot(mControlContainer);
+    setRoot(mControlContainer);
 }
 
 void MoPubView::setWidth(int value) {
@@ -182,17 +182,17 @@ void MoPubView::onNavigationRequested(bb::cascades::WebNavigationRequest* reques
         return;
     }
 
-	// Handle the special mopub:// scheme calls.
-	if (scheme == "mopub") {
-		QString host = request->url().host().toLower();
-		if (host == "finishload"){ 		qDebug() << "emit finishload";	    emitAdDidLoad(); }
-		else if (host == "close"){ 		qDebug() << "emit close"; 		    emit adDidClose(); }
-		else if (host == "failload"){ 	qDebug() << "failload loadFailUrl"; loadFailUrl(); }
-		else if (host == "custom"){		qDebug() << "mopub custom";         invokeUrl(url); }
-		request->ignore();
-	}
-	// Ad was clicked open in browser
-	else if ((mUrl != url) && (scheme == "http" || scheme == "https"))
+    // Handle the special mopub:// scheme calls.
+    if (scheme == "mopub") {
+        QString host = request->url().host().toLower();
+        if (host == "finishload"){      qDebug() << "emit finishload";      emitAdDidLoad(); }
+        else if (host == "close"){      qDebug() << "emit close";           emit adDidClose(); }
+        else if (host == "failload"){   qDebug() << "failload loadFailUrl"; loadFailUrl(); }
+        else if (host == "custom"){     qDebug() << "mopub custom";         invokeUrl(url); }
+        request->ignore();
+    }
+    // Ad was clicked open in browser
+    else if ((mUrl != url) && (scheme == "http" || scheme == "https"))
     {
         addClickTrackingRedirect(url);
         qDebug() << "Ad clicked. Click URL: " << url;
@@ -202,13 +202,13 @@ void MoPubView::onNavigationRequested(bb::cascades::WebNavigationRequest* reques
             request->ignore();
         }
     }
-	// Invoke all other url schemes.
-	else if (mUrl != url)
+    // Invoke all other url schemes.
+    else if (mUrl != url)
     {
         invokeUrl(url);
         request->ignore();
     }
-	emit htmlChanged();
+    emit htmlChanged();
 }
 
 void MoPubView::registerClick(){
