@@ -75,7 +75,7 @@
     <configuration name="Device-Release">
        <entryPointType>Qnx/Cascades</entryPointType>
        <platformArchitecture>armle-v7</platformArchitecture>
-       <asset path="arm/o.le-v7/mopub_bb10_simpleadsdemo.so" entry="true" type="Qnx/Elf">mopub_bb10_simpleadsdemo.so</asset>
+       <asset path="arm/o.le-v7-g/mopub_bb10_simpleadsdemo" entry="true" type="Qnx/Elf">mopub_bb10_simpleadsdemo</asset>
     </configuration>
     <configuration name="Device-Profile">
        <platformArchitecture>armle-v7</platformArchitecture>

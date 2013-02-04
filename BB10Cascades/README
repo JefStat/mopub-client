@@ -1,1 +1,5 @@
 Open Source MoPubSDK for BB10 Cascades
+
+To use all the sdk features for the best add targetting include the following libs in your .pro
+
+LIBS += -lbbsystem -lQtLocationSubset -lbbdevice -lbb
