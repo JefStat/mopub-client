@@ -361,7 +361,7 @@ void MoPubView::onFetchAdReply(){
     QString value(reply->readAll());
     reply->close();
 
-    // HACK: Insert width/height attributes of 100% to make the ad fill up
+    //todo: HACK - Insert width/height attributes of 100% to make the ad fill up
     // the entire view.
     int firstImgTagStart = value.indexOf("<img", 0, Qt::CaseInsensitive);
     if (firstImgTagStart != -1) {
@@ -379,15 +379,17 @@ void MoPubView::onFetchAdReply(){
         }
     }
 
-    // HACK: Avoid ads with iframes, due to issue with Honda ad using
+    //todo: HACK - Disable long press on ads by inserting javascript into the ad dom.
+    QString body = "<body oncontextmenu='return false' ";
+    value.replace("<body", body,  Qt::CaseInsensitive);
+
+    //todo: HACK - Avoid ads with iframes, due to issue with Honda ad using
     // iframes and opening up in a separate browser window.
     int iFrameTagIdx = value.indexOf("<iframe", 0, Qt::CaseInsensitive);
 
     if (iFrameTagIdx == -1) {
         mAdView->setHtml(value, mUrl);
     }
-    QString body = "<body oncontextmenu='return false'>";
-    value.replace("<body>",body);
 
     QString("<script language='javascript'>document.onmousedown=disableclick;function disableclick(e){if(event.button==2){return false;}}</script>");
 
@@ -537,7 +539,7 @@ QString MoPubView::getUserAgent(){
    //A temp user agent string is added when it is blank.
    if (agent.isEmpty())
    {
-       //TODO: Using Android user agent since there is not yet enough MoPub marketplace demand for BB10 to have a supply of ads.
+       //todo: HACK - Using Android user agent since there is not yet enough MoPub marketplace demand for BB10 to have a supply of ads.
        agent = QString("Mozilla/5.0%20%28Linux%3B%20U%3B%20Android%202.1%3B%20en-US%29%20AppleWebKit/522%20%20%28KHTML%2C%20like%20Gecko%29%20Safari/419.3");
    }
    return agent;
