@@ -19,14 +19,13 @@
 #include <bb/PackageInfo>
 #include <bb/location/PositionErrorCode>
 
-
 using namespace QtMobilitySubset;
 using namespace bb;
 using namespace bb::cascades;
 using namespace bb::system;
 using namespace bb::device;
 
-const QString MoPubView::SDK_VERSION = QString("1.9.0.8");
+const QString MoPubView::SDK_VERSION = QString("1.11.0.1");
 const QString MoPubView::API_VERSION = QString("8");
 #ifdef TESTING
 const QString MoPubView::MOPUB_URL = QString("http://testing.ads.mopub.com");
@@ -69,8 +68,14 @@ MoPubView::MoPubView()
     res = connect(app, SIGNAL(awake()),
             this, SLOT(scheduleRefreshTimerIfEnabled()));
     Q_ASSERT(res);
+    // when the application is minimized don't refresh the ad
+    res = connect(app, SIGNAL(thumbnail()), this, SLOT(cancelRefreshTimer()));
+    Q_ASSERT(res);
+    res = connect(app, SIGNAL(fullscreen()), this,
+            SLOT(scheduleRefreshTimerIfEnabled()));
+    Q_ASSERT(res);
 
-    mRefreshTimeMilliseconds = 60000;
+    mRefreshTimeMilliseconds = 10000;
     mAutoRefreshEnabled = true;
     res = connect(mAutoAdRefreshTimer, SIGNAL(timeout()), this, SLOT(loadAd()));
     Q_ASSERT(res);
@@ -120,12 +125,14 @@ QString MoPubView::createMoPubAPIUrl(QString handlerPart){
     urlString.append(MOPUB_URL + handlerPart);
     urlString.append("?v=" + API_VERSION);
     urlString.append("&id=" + mAdUnitId );
+    urlString.append("&ua=" + getUserAgent().toLatin1());
+    urlString.append("&country=US");
     return urlString;
 }
 
 QString MoPubView::getUdid(){
-    QByteArray hash = QCryptographicHash::hash(mHardwareInfo->imei().toUtf8(),QCryptographicHash::Sha1);
-    return "&udid=sha1imei:bb10" + hash.toHex();
+    QByteArray hash = QCryptographicHash::hash(mHardwareInfo->pin().toUtf8(),QCryptographicHash::Sha1);
+    return "&udid=sha:bb10" + hash.toHex();
 }
 
 QUrl MoPubView::generateAdUrl(){
@@ -354,18 +361,43 @@ void MoPubView::onFetchAdReply(){
     QString value(reply->readAll());
     reply->close();
 
-    //Remove webview's incorrectly handling of meta viewport device-size element.
-    QRegExp viewport("<meta name=\"viewport\".*>");
-    viewport.setMinimal(true);
-    value.remove(viewport);
+    // HACK: Insert width/height attributes of 100% to make the ad fill up
+    // the entire view.
+    int firstImgTagStart = value.indexOf("<img", 0, Qt::CaseInsensitive);
+    if (firstImgTagStart != -1) {
+        int firstImgTagEnd = value.indexOf(">", firstImgTagStart + 1);
+        // Try to find width attribute first
+        int widthAttrIdx = value.indexOf("width=", firstImgTagStart + 1, Qt::CaseInsensitive);
+        int heightAttrIdx = value.indexOf("height=", firstImgTagStart + 1, Qt::CaseInsensitive);
+        int minDimAttrIdx = widthAttrIdx < heightAttrIdx ? widthAttrIdx : heightAttrIdx;
+        if (minDimAttrIdx >= 0 && minDimAttrIdx < firstImgTagEnd) {
+            // Overrides existing width/height attributes
+            value.insert(minDimAttrIdx, "width=\"100%\" height=\"100%\" ");
+        } else if (firstImgTagEnd != -1) {
+            // Inserts width/height attributes
+            value.insert(firstImgTagEnd, " width=\"100%\" height=\"100%\"");
+        }
+    }
 
-    mAdView->setHtml(value,mUrl);
+    // HACK: Avoid ads with iframes, due to issue with Honda ad using
+    // iframes and opening up in a separate browser window.
+    int iFrameTagIdx = value.indexOf("<iframe", 0, Qt::CaseInsensitive);
+
+    if (iFrameTagIdx == -1) {
+        mAdView->setHtml(value, mUrl);
+    }
+    QString body = "<body oncontextmenu='return false'>";
+    value.replace("<body>",body);
+
+    QString("<script language='javascript'>document.onmousedown=disableclick;function disableclick(e){if(event.button==2){return false;}}</script>");
+
     mIsLoading = false;
     reply->deleteLater();
 }
 
 //TODO add any native SDK support currently there are none for BB10
 void MoPubView::loadNativeSDK(const QHash<QString, QString>& paramsHash){
+	Q_UNUSED(paramsHash);
     qDebug() << "Loading native SDK is not implemented.";
 }
 
@@ -432,7 +464,6 @@ void MoPubView::configureAdViewUsingHeadersFromHttpResponse(QNetworkReply* reply
         if (QString(reply->rawHeader("X-Interceptlinks")) == "1"){
             mInterceptslinks = true;
         } else {mInterceptslinks = false;}
-
     }
 }
 
@@ -503,11 +534,11 @@ void MoPubView::exponentialBackoff(){
 
 QString MoPubView::getUserAgent(){
    QString agent = mAdView->settings()->userAgent();
-   //A fake user agent string is added when it is blank. Added version value from Cascades Gold Release sdk.
-   //This string matches the format added to webkit http://trac.webkit.org/changeset/125779/trunk/Source/WebCore/inspector/front-end/SettingsScreen.js
+   //A temp user agent string is added when it is blank.
    if (agent.isEmpty())
    {
-       agent = QString("[\"BlackBerry \u2014 BB10\", \"Mozilla/5.0 (BB10; Touch) AppleWebKit/537.1+ (KHTML, like Gecko) Version/10.0.9.1673 Mobile Safari/537.1+\", \"768x1280x1\"]");
+       //TODO: Using Android user agent since there is not yet enough MoPub marketplace demand for BB10 to have a supply of ads.
+       agent = QString("Mozilla/5.0%20%28Linux%3B%20U%3B%20Android%202.1%3B%20en-US%29%20AppleWebKit/522%20%20%28KHTML%2C%20like%20Gecko%29%20Safari/419.3");
    }
    return agent;
 }
@@ -545,3 +576,5 @@ void MoPubView::conversionTracking(){
     request.setRawHeader("User-Agent", getUserAgent().toLatin1());
     mNetworkAccessManager->get(request);
 }
+
+MoPubView::~MoPubView(){}

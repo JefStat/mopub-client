@@ -51,6 +51,7 @@ public:
 	static const double EXPONENTIAL_BACKOFF_FACTOR;
 
 	MoPubView();
+	virtual ~MoPubView();
 
 	//Q_PROPERTIES getter setters
 	QString adUnitId() const { return mAdUnitId; }
