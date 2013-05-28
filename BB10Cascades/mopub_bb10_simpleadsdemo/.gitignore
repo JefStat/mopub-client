@@ -4,6 +4,7 @@
 *.o
 *.preview*
 
+
 # Compiled Dynamic libraries
 *.so
 
@@ -16,3 +17,6 @@
 /arm/
 /x86/
 /arm-p/
+
+#ide generated files
+config.pri
